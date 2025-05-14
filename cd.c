@@ -40,7 +40,7 @@ static void	cd_home(t_minishell *minishell)
 
 void cd_replace_env_var(char **envp, char *var_name, char *replace_value)
 {
-	int		index;
+	int	index;
 	char	*new_env_var;
 
 	index = ft_getenv_index(envp, var_name);
