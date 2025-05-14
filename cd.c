@@ -1,11 +1,5 @@
 #include "minishell.h"
 
-static void	cd_home(t_minishell *minishell);
-static void	cd_error(t_minishell *minishell);
-static char	*expand_tilde(t_minishell *minishell, char *arg);
-static bool	valid_arg(t_minishell *minishell);
-static void update_envp_pwd(t_minishell *minishell);
-
 static void	cd_home(t_minishell *minishell)
 {
 	const char	*home;
