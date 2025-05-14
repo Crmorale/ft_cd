@@ -1,5 +1,19 @@
 #include "minishell.h"
 
+void	cd_print_error(char *path)
+{
+	struct stat	buf;
+
+	if (access(path, F_OK) != 0)
+		printf("minishell: cd: %s: No such file or directory\n", path);
+	else if (stat(path, &buf) != 0 || !S_ISDIR(buf.st_mode))
+		printf("minishell: cd: %s: Not a directory\n", path);
+	else if (access(path, X_OK) != 0)
+		printf("minishell: cd: %s: Permission denied\n", path);
+	else
+		printf("minishell: cd: %s: Failed to change directory\n", path);
+}
+
 static void	cd_home(t_minishell *minishell)
 {
 	const char	*home;
@@ -20,6 +34,50 @@ static void	cd_home(t_minishell *minishell)
 		update_envp_pwd(minishell);
 }
 
+void cd_replace_env_var(char **envp, char *var_name, char *replace_value)
+{
+	int		index;
+	char	*new_env_var;
+
+	index = ft_getenv_index(envp, var_name);
+	if (index < 0)
+		return ;
+	new_env_var = ft_strjoin(var_name, replace_value);
+	if (!new_env_var)
+		return ;
+	matrix_replace(envp, index, new_env_var);
+	free(new_env_var);
+}
+
+static void	update_envp_pwd(t_minishell *minishell)
+{
+	char	*pwd;
+	char	*new_pwd;
+
+	pwd = ft_getenv(minishell->envp, "PWD=");
+	cd_replace_env_var(minishell->envp, "OLDPWD=", pwd);
+	new_pwd = getcwd(NULL, 0);
+	if (new_pwd)
+	{
+		cd_replace_env_var(minishell->envp, "PWD=", new_pwd);
+		free(new_pwd);
+	}
+}
+
+bool	cd_change_directory(t_minishell *minishell, char *path)
+{
+	struct stat	buf;
+
+	if (access(path, F_OK) != 0 || access(path, X_OK) != 0)
+		return (false);
+	if (stat(path, &buf) != 0 || !S_ISDIR(buf.st_mode))
+		return (false);
+	if (chdir(path) != 0)
+		return (false);
+	update_envp_pwd(minishell);
+	return (true);
+}
+
 static char	*expand_tilde(t_minishell *minishell, char *arg)
 {
 	char	*home;
@@ -32,7 +90,6 @@ static char	*expand_tilde(t_minishell *minishell, char *arg)
 	free(arg);
 	return (new_path);
 }
-
 
 static char	*get_cd_argument(t_minishell *minishell, char *arg)
 {
@@ -68,64 +125,6 @@ void	cd_handle_arg(t_minishell *minishell)
 	if (cd_change_directory(minishell, arg) == false)
 		cd_print_error(arg);
 	free(arg);
-}
-
-static void	update_envp_pwd(t_minishell *minishell)
-{
-	char	*pwd;
-	char	*new_pwd;
-
-	pwd = ft_getenv(minishell->envp, "PWD=");
-	cd_replace_env_var(minishell->envp, "OLDPWD=", pwd);
-	new_pwd = getcwd(NULL, 0);
-	if (new_pwd)
-	{
-		cd_replace_env_var(minishell->envp, "PWD=", new_pwd);
-		free(new_pwd);
-	}
-}
-
-bool	cd_change_directory(t_minishell *minishell, char *path)
-{
-	struct stat	buf;
-
-	if (access(path, F_OK) != 0 || access(path, X_OK) != 0)
-		return (false);
-	if (stat(path, &buf) != 0 || !S_ISDIR(buf.st_mode))
-		return (false);
-	if (chdir(path) != 0)
-		return (false);
-	update_envp_pwd(minishell);
-	return (true);
-}
-
-void	cd_print_error(char *path)
-{
-	struct stat	buf;
-
-	if (access(path, F_OK) != 0)
-		printf("minishell: cd: %s: No such file or directory\n", path);
-	else if (stat(path, &buf) != 0 || !S_ISDIR(buf.st_mode))
-		printf("minishell: cd: %s: Not a directory\n", path);
-	else if (access(path, X_OK) != 0)
-		printf("minishell: cd: %s: Permission denied\n", path);
-	else
-		printf("minishell: cd: %s: Failed to change directory\n", path);
-}
-
-void cd_replace_env_var(char **envp, char *var_name, char *replace_value)
-{
-	int		index;
-	char	*new_env_var;
-
-	index = ft_getenv_index(envp, var_name);
-	if (index < 0)
-		return ;
-	new_env_var = ft_strjoin(var_name, replace_value);
-	if (!new_env_var)
-		return ;
-	matrix_replace(envp, index, new_env_var);
-	free(new_env_var);
 }
 
 void	ft_cd(t_minishell *minishell)
