@@ -1,5 +1,9 @@
 #include "minishell.h"
 
+/*Falta manejar el caso arg[0] == '~' en get_cd_argument  de modo que, cuando 
+no haya $HOME (porque lo borren, etc.), se tome la que se guardó en minishell_init en la estructura. 
+Falta hacer todo eso. ´*/
+
 void	cd_print_error(char *path)
 {
 	struct stat	buf;
